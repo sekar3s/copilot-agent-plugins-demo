@@ -62,14 +62,14 @@ Design choices that make one package work on every surface:
 | Paths | `${PLUGIN_ROOT}` in hook commands and MCP `args` | Plugins are installed outside your workspace. `command` stays the bare token `node`, as the spec requires (no placeholders in `command`). |
 | VS Code automations | `com.github.copilot/automations/` + `"extensions": {"com.github.copilot": {"automations": {"paths": ["./automations/"], "exclusive": true}}}` | Keeps every client-specific file inside the Copilot namespace folder (spec §8), using the documented `extensions` manifest field |
 | Versioning | `version` bumped in `plugin.json` **and** `marketplace.json` for every change | VS Code and the CLI use it to detect updates |
-| Runtime | Node ≥ 18 only, **zero npm dependencies** in the plugins | Nothing to install on the demo machine, and the same code runs on macOS, Linux and Windows |
+| Runtime | Node ≥ 20 only, **zero npm dependencies** in the plugins | Nothing to install on the demo machine, and the same code runs on macOS, Linux and Windows |
 | Self-containment | Shared helpers are *copied* into each plugin (CI checks the copies stay identical) | The spec forbids package paths that escape the plugin root |
 
 ---
 
 ## 📥 Install
 
-Requirements: **Node.js 18+** on `PATH`, plus the Copilot client you want to use. Pick your surface.
+Requirements: **Node.js 20+** on `PATH` (hooks preload their bootstrap with `NODE_OPTIONS=--import`), plus the Copilot client you want to use. Pick your surface.
 
 ### Copilot CLI
 
@@ -249,7 +249,7 @@ CI runs all of this on Linux, macOS and Windows ([`.github/workflows/validate.ym
 | Plugin doesn't appear in VS Code | Check that `chat.plugins.enabled` is `true`. Run **Developer: Reload Window**. Confirm the marketplace entry is `sekar3s/copilot-agent-plugins-demo`. |
 | `Skill not found`, or the agent ignores a skill | You probably have a lot of other skills and plugins installed, so the session's skill list gets truncated. For demos, use a clean profile: `export COPILOT_HOME=~/.copilot-demo` (CLI/app) or `code --profile "Agent Plugins Demo"` (VS Code). Then install only these plugins. |
 | `No such agent: release-captain` (CLI) | Use the namespaced name: `--agent ship-ready:release-captain`. |
-| MCP server fails to start | Run `node --version` (needs ≥ 18). Check that `node` is on the `PATH` the client inherits. In VS Code, see **MCP: List Servers → Show Output**. |
+| MCP server fails to start | Run `node --version` (needs ≥ 20). Check that `node` is on the `PATH` the client inherits. In VS Code, see **MCP: List Servers → Show Output**. |
 | `check_dependencies` says it can't reach OSV.dev | Your network or proxy blocks `api.osv.dev`. The tool falls back gracefully; use `npm audit` instead. |
 | Hooks don't fire in VS Code | Start a **new** chat after installing. Check that `chat.useHooks` is on and the workspace is trusted. In the Local harness, look at the **GitHub Copilot Chat Hooks** output channel. Run the guardrail yourself with `node tools/try-hook.mjs secure-code-guardian preToolUse` (it prints a `deny` decision when the plugin is installed). |
 | VS Code hooks run an old version after you edited the plugin | VS Code runs hooks from its synced copy. Toggle the plugin off and on, or reload the window, then start a new chat. |

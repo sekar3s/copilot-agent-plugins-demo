@@ -10,7 +10,7 @@
 
 | ✅ | Step |
 |---|---|
-| ☐ | Node 18+ (`node -v`), Copilot CLI up to date (`copilot update`), VS Code with GitHub Copilot, and the GitHub Copilot app, all signed in. |
+| ☐ | Node 20+ (`node -v`), Copilot CLI up to date (`copilot update`), VS Code with GitHub Copilot, and the GitHub Copilot app, all signed in. |
 | ☐ | Clone the demo app: `git clone https://github.com/sekar3s/octocat-supply-sep28 ~/demo/octocat-supply`. |
 | ☐ | Create a **dummy** secret file for the guardrail moment: `cd ~/demo/octocat-supply && printf 'DB_PASSWORD=demo-not-real\n' > .env`. It's git-ignored. |
 | ☐ | **Use a clean CLI profile** so your personal skills and plugins don't crowd the demo: `export COPILOT_HOME=~/.copilot-demo`. Put it in the terminal profile you'll present from. This isolates the CLI only; in the Copilot app, temporarily disable unrelated plugins under **Customize → Installed**. |
