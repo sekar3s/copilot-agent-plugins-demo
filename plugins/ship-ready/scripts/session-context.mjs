@@ -16,7 +16,7 @@ const git = (cwd, args) => {
 try {
   const { cwd, source } = normalize(await readPayload());
   audit(PLUGIN, { event: 'sessionStart', cwd, source });
-  if (git(cwd, ['rev-parse', '--is-inside-work-tree']) === 'true') {
+  if (cwd && git(cwd, ['rev-parse', '--is-inside-work-tree']) === 'true') {
     const branch = git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']) ?? 'unknown';
     const dirty = (git(cwd, ['status', '--porcelain']) ?? '').split('\n').filter(Boolean).length;
     const tag = git(cwd, ['describe', '--tags', '--abbrev=0']);

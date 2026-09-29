@@ -9,7 +9,7 @@
 
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, parse, resolve } from 'node:path';
 
 export async function readPayload() {
   if (process.stdin.isTTY) return {};
@@ -40,7 +40,7 @@ export function normalize(p = {}) {
   return {
     event: p.hook_event_name ?? p.hookEventName ?? null,
     sessionId: p.sessionId ?? p.session_id ?? null,
-    cwd: p.cwd || process.cwd(),
+    cwd: workspaceDir(p.cwd),
     toolName: String(p.toolName ?? p.tool_name ?? calls?.[0]?.toolName ?? ''),
     toolArgs: parseMaybeJson(p.toolArgs ?? p.tool_input ?? p.toolInput ?? calls?.[0]?.toolArgs),
     calls,
@@ -48,6 +48,17 @@ export function normalize(p = {}) {
     prompt: p.prompt ?? '',
     source: p.source ?? null,
   };
+}
+
+/**
+ * The user's workspace folder, or null when it is unknown. Some hosts (for example VS Code's
+ * Copilot session target) omit `cwd` from the payload and start hooks from the filesystem root,
+ * so the process cwd is only trusted when it is not the root or the home folder.
+ */
+export function workspaceDir(payloadCwd) {
+  if (payloadCwd) return payloadCwd;
+  const cwd = resolve(process.cwd());
+  return cwd === parse(cwd).root || cwd === resolve(homedir()) ? null : cwd;
 }
 
 /** Collect every string inside the tool arguments, tagged with the key that held it. */

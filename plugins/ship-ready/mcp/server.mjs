@@ -7,7 +7,7 @@ import { createServer, resolveTargetPath } from './lib/mcp-stdio.mjs';
 import { walk } from './lib/walk.mjs';
 import { git, isGitRepo, latestTag, readCommits, groupCommits, bumpFor, applyBump, TYPE_META } from './lib/git.mjs';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
 const exists = (root, ...candidates) => candidates.find((c) => existsSync(join(root, c))) ?? null;
 const readJson = (file) => {

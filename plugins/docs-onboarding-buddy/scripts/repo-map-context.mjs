@@ -8,8 +8,9 @@ const PLUGIN = 'docs-onboarding-buddy';
 try {
   const { cwd, source } = normalize(await readPayload());
   audit(PLUGIN, { event: 'sessionStart', cwd, source });
-  const map = buildRepoMap(cwd);
-  if (map.totalFiles > 0) {
+  // Without a known workspace there is nothing meaningful to map (never scan / or the home folder).
+  const map = cwd ? buildRepoMap(cwd) : null;
+  if (map?.totalFiles > 0) {
     addContext(
       'SessionStart',
       [

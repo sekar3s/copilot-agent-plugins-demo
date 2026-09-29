@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { createServer, resolveTargetPath } from './lib/mcp-stdio.mjs';
 import { walk, TEXT_EXTENSIONS } from './lib/walk.mjs';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
 // ---------------------------------------------------------------------------------------------
 // scan_secrets

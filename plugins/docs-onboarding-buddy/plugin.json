@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "docs-onboarding-buddy",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Onboard to any codebase in minutes: an onboarding-guide agent, a codebase-tour skill that writes ONBOARDING.md, a session hook that maps the repo automatically, and the Microsoft Learn MCP server for trusted platform docs.",
   "author": {
     "name": "sekar3s",
@@ -10,5 +10,22 @@
   "homepage": "https://github.com/sekar3s/copilot-agent-plugins-demo/tree/main/plugins/docs-onboarding-buddy",
   "repository": "https://github.com/sekar3s/copilot-agent-plugins-demo",
   "license": "MIT",
-  "keywords": ["onboarding", "documentation", "codebase-tour", "microsoft-learn", "mcp", "hooks"]
+  "keywords": [
+    "onboarding",
+    "documentation",
+    "codebase-tour",
+    "microsoft-learn",
+    "mcp",
+    "hooks"
+  ],
+  "extensions": {
+    "com.github.copilot": {
+      "automations": {
+        "paths": [
+          "./automations/"
+        ],
+        "exclusive": true
+      }
+    }
+  }
 }

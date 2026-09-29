@@ -4,7 +4,7 @@ description: Produce a lightweight STRIDE threat model for an application, servi
 license: MIT
 metadata:
   plugin: secure-code-guardian
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Threat Model (STRIDE)

@@ -4,7 +4,7 @@ description: Generate a guided onboarding tour of a repository — architecture 
 license: MIT
 metadata:
   plugin: docs-onboarding-buddy
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Codebase Tour

@@ -1,0 +1,15 @@
+{
+  "extraKnownMarketplaces": {
+    "copilot-agent-plugins-demo": {
+      "source": {
+        "source": "github",
+        "repo": "sekar3s/copilot-agent-plugins-demo"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ship-ready@copilot-agent-plugins-demo": true,
+    "secure-code-guardian@copilot-agent-plugins-demo": true,
+    "docs-onboarding-buddy@copilot-agent-plugins-demo": true
+  }
+}

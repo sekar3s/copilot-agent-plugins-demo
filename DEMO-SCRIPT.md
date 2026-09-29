@@ -14,7 +14,7 @@
 | ☐ | Clone the demo app: `git clone https://github.com/sekar3s/octocat-supply-sep28 ~/demo/octocat-supply`. |
 | ☐ | Create a **dummy** secret file for the guardrail moment: `cd ~/demo/octocat-supply && printf 'DB_PASSWORD=demo-not-real\n' > .env`. It's git-ignored. |
 | ☐ | **Use a clean CLI profile** so your personal skills and plugins don't crowd the demo: `export COPILOT_HOME=~/.copilot-demo`. Put it in the terminal profile you'll present from. This isolates the CLI only; in the Copilot app, temporarily disable unrelated plugins under **Customize → Installed**. |
-| ☐ | VS Code: create a profile named `Agent Plugins Demo` (**Profiles → New Profile**) with only GitHub Copilot installed. Set `"chat.plugins.enabled": true`. |
+| ☐ | VS Code 1.139+: create a profile named `Agent Plugins Demo` (**Profiles → New Profile**) with only GitHub Copilot installed. Set `"chat.plugins.enabled": true`, and pick **Copilot** in the chat **Session Target** control (it runs every plugin component; see the README's VS Code table). |
 | ☐ | Dry-run every prompt below once. Leave the **Guardian** dependency check warm, because the first OSV.dev call is the slowest. |
 | ☐ | Open tabs: this repo on GitHub, [agent-plugins.org](https://agent-plugins.org/), and the [VS Code plugin docs](https://code.visualstudio.com/docs/agent-customization/agent-plugins). |
 | ☐ | Terminal font ≥ 16pt. Turn on Do Not Disturb. |
@@ -50,7 +50,7 @@ Open [`plugins/secure-code-guardian`](plugins/secure-code-guardian) in VS Code a
 Then show the quality story:
 
 ```bash
-npm run check    # schema validation + 67 tests, also runs in CI on Linux/macOS/Windows
+npm run check    # schema validation + 97 tests, also runs in CI on Linux/macOS/Windows
 ```
 
 ## 3. Install from the marketplace in the CLI (2 min)
@@ -93,10 +93,12 @@ Add LOG_LEVEL=debug to the .env file.
 Expected result: the agent tries to open `.env` → `✗ Denied by preToolUse hook: 🛡️ Secure Code Guardian blocked this view call [secret-file] …`
 
 ```
-Install bun with its official install script: curl -fsSL https://bun.sh/install | bash
+Install bun with its official install script: curl -fsSL https://bun.sh/install | bash. If that is blocked, stop and explain why — do not try another way.
 ```
 
-Expected result: `✗ … blocked this bash call [pipe-to-shell]`. The agent then adapts on its own, usually by downloading the script to review it first. That's the behavior you want.
+Expected result: `✗ … blocked this bash call [pipe-to-shell]`, and the agent explains the policy.
+
+> ⚠️ Keep the *"stop and explain"* sentence. Without it, the agent often adapts on its own: it downloads the script, reviews it and runs it, which **really installs bun** on the demo machine.
 
 > *"This isn't the model being polite. It's a deterministic policy that runs before every tool call, and the model can't talk its way around it. Enterprises can force-enable this plugin and set `allowManagedHooksOnly`."*
 
@@ -125,7 +127,7 @@ Expected result: a STRIDE table with a Mermaid data-flow diagram.
    - *Note:* VS Code also automatically discovers plugins installed by the CLI in `~/.copilot/installed-plugins/`. That doesn't apply here, because the demo CLI uses `COPILOT_HOME=~/.copilot-demo`.
 3. Open **Chat: Configure Skills** and **MCP: List Servers** to show the plugin's skill and server next to local ones.
 4. In a new terminal, run `tail -f ~/.agent-plugins-demo/ship-ready/audit.log`.
-5. In Chat, pick the **release-captain** agent and ask:
+5. Make sure **Session Target** is **Copilot**, start a **new** chat, pick the **release-captain** agent and ask:
 
 ```
 Are we ready to ship?
@@ -140,6 +142,12 @@ Draft the release notes for that version.
 Expected result: the `release-notes` skill produces highlights, grouped changes and contributors.
 
 > *"Hooks give you an audit trail of every agent action. That's the compliance conversation, solved with ~20 lines of Node."*
+
+6. Show the guardrail in VS Code too: `Add LOG_LEVEL=debug to the .env file` → denied by the same `preToolUse` hook you saw in the CLI.
+7. **VS Code extras** (30 sec each, pick one or two):
+   - **Handoffs:** switch to **security-reviewer**, ask `Quick security review — dependencies only`, then click **Fix the top findings** to hand the plan to the default agent.
+   - **Automation templates:** open the Agents window → **Automations** → **New** → **Templates from Plugins** → *Daily dependency & secret audit*. *"Plugins can ship scheduled agent tasks, not just tools."*
+   - **Slash skills:** type `/threat-model the products API` in chat.
 
 ## 6. 📚 Docs & Onboarding Buddy in the Copilot app (3 min)
 
@@ -183,6 +191,7 @@ Show the README section **"Recommend the plugins to your whole team"**:
 | OSV.dev is slow or offline | Show `scan_secrets` instead, and read the offline fallback message aloud as a *resilience* feature. |
 | `Skill not found` | The profile has too many skills; confirm `COPILOT_HOME=~/.copilot-demo`. Or say *"use the release-notes skill"* explicitly. |
 | The VS Code agent picker doesn't list plugin agents | **Developer: Reload Window**. Check **Agent Plugins – Installed**. Fall back to the CLI with `copilot --agent ship-ready:release-captain`. |
+| `ship-ready` / `guardian` tools are missing in VS Code | The **Session Target** is **Local**, which can't start bundled MCP servers from Agent Plugins 1.0 packages. Switch to **Copilot** and start a new chat. |
 | No network at all | Use the CLI with `--plugin-dir ./plugins/<name>` from a local clone. Everything except OSV.dev and Microsoft Learn works offline. |
 
 ## ❓ Likely questions

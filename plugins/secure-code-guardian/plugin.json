@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "secure-code-guardian",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Security guardrails for AI agents: blocks destructive commands and secret access with hooks, scans for secrets and vulnerable dependencies (OSV.dev) via MCP, and adds a security-reviewer agent and threat-model skill.",
   "author": {
     "name": "sekar3s",
@@ -10,5 +10,23 @@
   "homepage": "https://github.com/sekar3s/copilot-agent-plugins-demo/tree/main/plugins/secure-code-guardian",
   "repository": "https://github.com/sekar3s/copilot-agent-plugins-demo",
   "license": "MIT",
-  "keywords": ["security", "guardrails", "hooks", "secrets", "vulnerabilities", "threat-model", "mcp"]
+  "keywords": [
+    "security",
+    "guardrails",
+    "hooks",
+    "secrets",
+    "vulnerabilities",
+    "threat-model",
+    "mcp"
+  ],
+  "extensions": {
+    "com.github.copilot": {
+      "automations": {
+        "paths": [
+          "./automations/"
+        ],
+        "exclusive": true
+      }
+    }
+  }
 }

@@ -4,7 +4,7 @@ description: Write polished, audience-friendly release notes from git history â€
 license: MIT
 metadata:
   plugin: ship-ready
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Release Notes

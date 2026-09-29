@@ -2,6 +2,12 @@
 name: release-captain
 description: Release manager that checks whether a repository is ready to ship, recommends the next semantic version, drafts release notes, and produces a go/no-go checklist.
 tools: ['read', 'search', 'execute', 'edit', 'ship-ready/*']
+argument-hint: Optional target version, e.g. "1.4.0"
+handoffs:
+  - label: Write CHANGELOG.md
+    agent: agent
+    prompt: Prepend the release notes drafted above to CHANGELOG.md (create it if missing). Do not tag or push.
+    send: false
 ---
 
 # Release Captain

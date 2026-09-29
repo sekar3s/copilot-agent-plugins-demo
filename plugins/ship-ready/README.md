@@ -9,6 +9,7 @@ A release-readiness toolkit. It scores your repository, recommends the next sema
 | `release-captain` | Custom agent (Copilot) | [`com.github.copilot/agents/`](com.github.copilot/agents/release-captain.agent.md) | Readiness → version → changes → release notes → 🟢/🟡/🔴 go/no-go |
 | Release context | Hook `sessionStart` (Copilot) | [`scripts/session-context.mjs`](scripts/session-context.mjs) | Adds branch, ahead/behind, uncommitted changes and commits since the last tag to the agent's context |
 | Audit trail | Hook `postToolUse` (Copilot) | [`scripts/audit-tool.mjs`](scripts/audit-tool.mjs) | Appends every tool call (tool, target, result) as JSON lines to `~/.agent-plugins-demo/ship-ready/audit.log` |
+| `weekly-release-readiness` | Automation template (VS Code) | [`com.github.copilot/automations/`](com.github.copilot/automations/weekly-release-readiness.automation.md) | Every Friday 16:00: readiness score, version recommendation and draft notes |
 
 ## Install
 
@@ -17,7 +18,7 @@ copilot plugin marketplace add sekar3s/copilot-agent-plugins-demo
 copilot plugin install ship-ready@copilot-agent-plugins-demo
 ```
 
-For VS Code and the GitHub Copilot app, see the [root README](../../README.md#-install).
+In VS Code, add `"chat.plugins.marketplaces": ["sekar3s/copilot-agent-plugins-demo"]` to your settings, install from the Extensions view (`@agentPlugins`), and use the **Copilot** session target. For the GitHub Copilot app and more options, see the [root README](../../README.md#-install).
 
 ## Try it
 

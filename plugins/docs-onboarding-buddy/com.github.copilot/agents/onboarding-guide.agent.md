@@ -2,6 +2,7 @@
 name: onboarding-guide
 description: Friendly onboarding mentor that explains how a codebase works, answers "where is / how do I" questions with file references, grounds platform questions in Microsoft Learn docs, and can generate an ONBOARDING.md tour.
 tools: ['read', 'search', 'edit', 'microsoft-learn/*']
+argument-hint: A question about the codebase, or "give me a tour"
 ---
 
 # Onboarding Guide

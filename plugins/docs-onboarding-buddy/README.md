@@ -8,6 +8,7 @@ Get a new teammate productive on day one. A **session hook** maps the repository
 | `microsoft-learn` | MCP server (portable, **remote streamable-http**) | [`mcp.json`](mcp.json) | `https://learn.microsoft.com/api/mcp` — no auth, nothing to install. Tools: `microsoft_docs_search`, `microsoft_docs_fetch`, `microsoft_code_sample_search`. |
 | `onboarding-guide` | Custom agent (Copilot) | [`com.github.copilot/agents/`](com.github.copilot/agents/onboarding-guide.agent.md) | Mentor persona that grounds every answer in code and cites Learn URLs |
 | Repo map | Hook `sessionStart` (Copilot) | [`scripts/repo-map-context.mjs`](scripts/repo-map-context.mjs) | Injects stack, folders, entry points and docs into the agent's context. Reuses the skill's script, so the logic lives in one place. |
+| `onboarding-guide-refresh` | Automation template (VS Code) | [`com.github.copilot/automations/`](com.github.copilot/automations/onboarding-guide-refresh.automation.md) | Every Monday: check `ONBOARDING.md` against the code and propose updates |
 
 > This plugin shows the **second MCP transport**. The other two plugins bundle local `stdio` servers, and this one points at a hosted `streamable-http` endpoint. Both are portable Agent Plugins 1.0 `mcp.json` entries.
 
@@ -18,7 +19,7 @@ copilot plugin marketplace add sekar3s/copilot-agent-plugins-demo
 copilot plugin install docs-onboarding-buddy@copilot-agent-plugins-demo
 ```
 
-For VS Code and the GitHub Copilot app, see the [root README](../../README.md#-install).
+In VS Code, add `"chat.plugins.marketplaces": ["sekar3s/copilot-agent-plugins-demo"]` to your settings, install from the Extensions view (`@agentPlugins`), and use the **Copilot** session target. For the GitHub Copilot app and more options, see the [root README](../../README.md#-install).
 
 ## Try it
 
