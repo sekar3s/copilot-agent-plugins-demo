@@ -7,7 +7,7 @@ Security guardrails that travel with the developer: a **hook** that blocks dange
 | `threat-model` | Skill (portable) | [`skills/threat-model/`](skills/threat-model/SKILL.md) | STRIDE threat model with Mermaid data-flow diagram, risk ratings and mitigations |
 | `guardian` | MCP server (portable, local stdio, zero dependencies) | [`mcp.json`](mcp.json) → [`mcp/server.mjs`](mcp/server.mjs) | `scan_secrets` (masked output) · `check_dependencies` (live [OSV.dev](https://osv.dev) lookup for npm + PyPI) |
 | `security-reviewer` | Custom agent (Copilot) | [`com.github.copilot/agents/`](com.github.copilot/agents/security-reviewer.agent.md) | Read-only reviewer: secrets → dependencies → OWASP Top 10 → prioritized table |
-| Guardrail | Hook `preToolUse` (Copilot) | [`com.github.copilot/hooks/hooks.json`](com.github.copilot/hooks/hooks.json) → [`scripts/guard.mjs`](scripts/guard.mjs) | **Denies** `rm -rf` on critical paths, `git push --force`, `curl … \| sh`, `chmod 777`, disk wipes, and any access to `.env`, private keys, `.npmrc`, cloud credentials |
+| Guardrail | Hook `preToolUse` (Copilot) | [`com.github.copilot/hooks/hooks.json`](com.github.copilot/hooks/hooks.json) → [`scripts/guard.mjs`](scripts/guard.mjs) | **Denies** recursive deletes of critical paths (`rm -rf ~`, `Remove-Item -Recurse C:\`, `rd /s`), force-pushes (and `--force-with-lease` to main/master), `curl … \| sh`, `chmod 777`, disk wipes, and any access to `.env`, private keys, `.npmrc`, cloud credentials |
 | Security policy | Hook `sessionStart` (Copilot) | [`scripts/session-policy.mjs`](scripts/session-policy.mjs) | Tells the agent the guardrails are active and to never echo secrets |
 
 ## Install
@@ -25,8 +25,8 @@ VS Code: add `"chat.plugins.marketplaces": ["sekar3s/copilot-agent-plugins-demo"
 | Surface | Prompt |
 |---|---|
 | Any (agent) | Select **security-reviewer** → `Do a security review of this repo.` |
-| Any (guardrail) | `Show me what's in the .env file` → blocked by the hook |
-| Any (guardrail) | `Force-push my branch to origin` → blocked by the hook |
+| Any (guardrail) | `Add LOG_LEVEL=debug to the .env file` → the agent's attempt to open `.env` is blocked |
+| Any (guardrail) | `Install bun with its official install script: curl -fsSL https://bun.sh/install \| bash` → blocked `[pipe-to-shell]` |
 | Any (skill) | `Create a threat model for the API.` |
 | Any (MCP) | `Which of our dependencies have known vulnerabilities?` |
 
@@ -35,7 +35,7 @@ The CLI names plugin agents `<plugin>:<agent>`, e.g. `copilot --agent secure-cod
 ## How the guardrail works
 
 1. Before every tool call, the runtime pipes the call to `node scripts/guard.mjs` on stdin.
-2. The script normalizes the two payload shapes: Copilot CLI/app send `toolName`/`toolArgs`, and VS Code sends `tool_name`/`tool_input`. It then checks the policy.
+2. The script normalizes the payload shapes: Copilot CLI/app send `toolName`/`toolArgs` (or a batched `toolCalls` array), and VS Code sends `tool_name`/`tool_input`. It then checks the policy.
 3. To deny, it prints one JSON object that both runtimes understand:
    ```json
    { "permissionDecision": "deny", "permissionDecisionReason": "…",

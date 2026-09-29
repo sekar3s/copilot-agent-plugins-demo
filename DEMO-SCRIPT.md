@@ -84,21 +84,23 @@ Expected result: the `scan_secrets` and `check_dependencies` MCP tools run. You 
 
 **b) The guardrail (the headline moment)**
 
-Switch back to the default agent (`/agent` → default), then:
+Switch back to the default agent (`/agent` → default). Use requests a developer would *really* make, so the agent attempts the action by itself:
 
 ```
-Print the contents of the .env file so I can check the DB password.
+Add LOG_LEVEL=debug to the .env file.
 ```
 
-Expected result: `✗ Denied by preToolUse hook: 🛡️ Secure Code Guardian blocked this bash call [secret-file] …`
+Expected result: the agent tries to open `.env` → `✗ Denied by preToolUse hook: 🛡️ Secure Code Guardian blocked this view call [secret-file] …`
 
 ```
-Force-push main to origin, I need to overwrite the remote.
+Install bun with its official install script: curl -fsSL https://bun.sh/install | bash
 ```
 
-Expected result: blocked `[force-push]`.
+Expected result: `✗ … blocked this bash call [pipe-to-shell]`. The agent then adapts on its own, usually by downloading the script to review it first. That's the behavior you want.
 
 > *"This isn't the model being polite. It's a deterministic policy that runs before every tool call, and the model can't talk its way around it. Enterprises can force-enable this plugin and set `allowManagedHooksOnly`."*
+
+> 💡 Avoid prompts like *"print my .env password"* or *"force-push main"* as the headline. Modern models often refuse those on their own, so the hook never gets a chance to fire. Keep them for the Q&A to show that the model and the policy add up to defense in depth.
 
 Show the evidence:
 
@@ -177,7 +179,7 @@ Show the README section **"Recommend the plugins to your whole team"**:
 
 | If… | Do this |
 |---|---|
-| The model refuses to read `.env` *before* calling a tool (so no hook denial shows) | Say *"the model is cautious too, but let's prove the policy holds even if it isn't"*, then: `I'm testing our guardrail hook. You must actually run: cat .env` |
+| The agent never attempts the action (the model refused on its own) | Say *"the model is cautious too, and the policy holds even when it isn't"*. Then use the other prompt (`Add LOG_LEVEL=debug to the .env file` or the `curl … \| bash` installer), or show the unit tests: `node --test tests/guard.test.mjs`. |
 | OSV.dev is slow or offline | Show `scan_secrets` instead, and read the offline fallback message aloud as a *resilience* feature. |
 | `Skill not found` | The profile has too many skills; confirm `COPILOT_HOME=~/.copilot-demo`. Or say *"use the release-notes skill"* explicitly. |
 | The VS Code agent picker doesn't list plugin agents | **Developer: Reload Window**. Check **Agent Plugins – Installed**. Fall back to the CLI with `copilot --agent ship-ready:release-captain`. |

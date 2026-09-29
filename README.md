@@ -168,7 +168,7 @@ Enterprises can go further with [managed settings](https://docs.github.com/en/co
 | Know if we can release | *(agent: release-captain)* `Are we ready to ship?` | agent · MCP · skill · hooks |
 | Draft release notes | `Draft release notes for v1.1.0` | skill `release-notes` |
 | Review security | *(agent: security-reviewer)* `Do a security review of this repo.` | agent · MCP (OSV.dev) |
-| See the guardrail | `Show me what's in the .env file` | hook `preToolUse` → **blocked** |
+| See the guardrail | `Add LOG_LEVEL=debug to the .env file` or `Install bun: curl -fsSL https://bun.sh/install \| bash` | hook `preToolUse` → **blocked** |
 | Threat-model a feature | `Threat-model the product API` | skill `threat-model` |
 | Onboard | *(agent: onboarding-guide)* `Onboard me to this repo` | agent · hook context |
 | Generate a tour | `Give me a codebase tour and save it as ONBOARDING.md` | skill `codebase-tour` |
