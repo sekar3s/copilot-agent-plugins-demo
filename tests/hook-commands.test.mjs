@@ -64,7 +64,7 @@ test('bootstrap stays free of shell-sensitive characters', () => assert.doesNotM
 
 for (const plugin of Object.keys(HOOKS)) {
   test(`${plugin} hooks.json is generated from tools/build-hooks.mjs`, () => {
-    assert.equal(readFileSync(hooksPath(plugin), 'utf8'), `${JSON.stringify({ version: 1, hooks: HOOKS[plugin] }, null, 2)}\n`);
+    assert.equal(readFileSync(hooksPath(plugin), 'utf8').replace(/\r\n/g, '\n'), `${JSON.stringify({ version: 1, hooks: HOOKS[plugin] }, null, 2)}\n`);
   });
 
   const hooks = JSON.parse(readFileSync(hooksPath(plugin), 'utf8')).hooks;

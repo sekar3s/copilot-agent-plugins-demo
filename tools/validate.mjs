@@ -218,7 +218,7 @@ function validateOne(pluginRoot) {
         }
       }
       // hooks.json is generated so every command stays shell-neutral (see tools/build-hooks.mjs).
-      if (HOOKS[plugin] && readFileSync(hooksPath, 'utf8') !== renderHooks(plugin)) err(plugin, 'hooks.json is out of date — run: node tools/build-hooks.mjs');
+      if (HOOKS[plugin] && readFileSync(hooksPath, 'utf8').replace(/\r\n/g, '\n') !== renderHooks(plugin)) err(plugin, 'hooks.json is out of date — run: node tools/build-hooks.mjs');
       ok(`hooks.json valid — ${Object.keys(hooks.hooks ?? {}).join(', ')}`);
     }
   }

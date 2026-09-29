@@ -75,7 +75,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   for (const plugin of Object.keys(HOOKS)) {
     const file = hooksPath(plugin);
     const next = render(plugin);
-    const current = existsSync(file) ? readFileSync(file, 'utf8') : '';
+    const current = existsSync(file) ? readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : '';
     if (current === next) continue;
     if (check) {
       stale++;
