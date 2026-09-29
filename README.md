@@ -191,7 +191,7 @@ Hook audit logs are written to `~/.agent-plugins-demo/<plugin>/audit.log`, or to
 ```bash
 npm install          # dev-only dependency: ajv (the plugins themselves have zero dependencies)
 npm run validate     # validates every manifest against the official Agent Plugins 1.0 schemas + semantic rules
-npm test             # 64 tests: guardrail policy (both payload shapes), hooks, MCP servers over stdio, validator
+npm test             # 67 tests: guardrail policy (both payload shapes), hooks, MCP servers over stdio, validator
 ```
 
 [`tools/validate.mjs`](tools/validate.mjs) checks:

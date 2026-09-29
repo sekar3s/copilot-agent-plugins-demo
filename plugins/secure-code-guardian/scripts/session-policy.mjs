@@ -11,7 +11,6 @@ try {
     'SessionStart',
     [
       '🛡️ Secure Code Guardian is active for this session: a preToolUse guardrail hook enforces the team security policy on every tool call.',
-      '- Never print, copy or commit secret values. Reference environment variable names instead.',
       '- For security questions, prefer the guardian MCP tools (scan_secrets, check_dependencies) and the threat-model skill.',
     ].join('\n'),
   );

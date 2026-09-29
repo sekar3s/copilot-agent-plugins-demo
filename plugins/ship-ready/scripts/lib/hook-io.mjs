@@ -33,12 +33,17 @@ function parseMaybeJson(value) {
 }
 
 export function normalize(p = {}) {
+  // Some Copilot runtimes batch tool calls: { toolCalls: [{ name, args }] }.
+  const calls = Array.isArray(p.toolCalls)
+    ? p.toolCalls.map((c) => ({ toolName: String(c.name ?? c.toolName ?? ''), toolArgs: parseMaybeJson(c.args ?? c.arguments ?? c.toolArgs) }))
+    : null;
   return {
     event: p.hook_event_name ?? p.hookEventName ?? null,
     sessionId: p.sessionId ?? p.session_id ?? null,
     cwd: p.cwd || process.cwd(),
-    toolName: String(p.toolName ?? p.tool_name ?? ''),
-    toolArgs: parseMaybeJson(p.toolArgs ?? p.tool_input ?? p.toolInput),
+    toolName: String(p.toolName ?? p.tool_name ?? calls?.[0]?.toolName ?? ''),
+    toolArgs: parseMaybeJson(p.toolArgs ?? p.tool_input ?? p.toolInput ?? calls?.[0]?.toolArgs),
+    calls,
     toolResult: p.toolResult ?? p.tool_result ?? null,
     prompt: p.prompt ?? '',
     source: p.source ?? null,

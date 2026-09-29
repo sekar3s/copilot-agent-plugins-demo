@@ -24,6 +24,7 @@ const SECRET_FILE = [
 
 const COMMAND_RULES = [
   { id: 'force-push', re: /\bgit\s+push\b[^;&|\n]*?(\s--force(?!-with-lease)\b|\s-f\b|\s\+[\w/.-]+)/, why: 'Force-pushing rewrites shared history. Use a normal push or open a PR.' },
+  { id: 'force-push-protected', re: /\bgit\s+push\b[^;&|\n]*?--force-with-lease\b[^;&|\n]*?\b(main|master|release\/[\w.-]+)\b/, why: 'Force-pushing to a protected branch (main/master/release) is not allowed, even with --force-with-lease.' },
   {
     id: 'pipe-to-shell',
     // Shells and iex always execute stdin; python/node only when they read the script from stdin (no args or "-").
@@ -183,11 +184,14 @@ export function evaluate({ toolName, toolArgs }) {
 async function main() {
   try {
     const input = normalize(await readPayload());
-    const result = evaluate(input);
-    if (result.decision === 'deny') {
-      const reason = `🛡️ Secure Code Guardian blocked this ${input.toolName || 'tool'} call [${result.rule}]: ${result.reason}`;
-      audit(PLUGIN, { event: 'preToolUse', decision: 'deny', rule: result.rule, tool: input.toolName, cwd: input.cwd });
+    const calls = input.calls?.length ? input.calls : [input];
+    for (const call of calls) {
+      const result = evaluate(call);
+      if (result.decision !== 'deny') continue;
+      const reason = `🛡️ Secure Code Guardian blocked this ${call.toolName || 'tool'} call [${result.rule}]: ${result.reason}`;
+      audit(PLUGIN, { event: 'preToolUse', decision: 'deny', rule: result.rule, tool: call.toolName, cwd: input.cwd });
       deny(reason);
+      break;
     }
   } catch (err) {
     // Never crash: a crashing preToolUse hook denies *every* tool call in Copilot CLI.

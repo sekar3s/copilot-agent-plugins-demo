@@ -50,7 +50,7 @@ Open [`plugins/secure-code-guardian`](plugins/secure-code-guardian) in VS Code a
 Then show the quality story:
 
 ```bash
-npm run check    # schema validation + 64 tests, also runs in CI on Linux/macOS/Windows
+npm run check    # schema validation + 67 tests, also runs in CI on Linux/macOS/Windows
 ```
 
 ## 3. Install from the marketplace in the CLI (2 min)
