@@ -213,7 +213,7 @@ function validateOne(pluginRoot) {
           if (!h.bash && !h.powershell && !h.command && !h.exec && h.type !== 'prompt' && h.type !== 'http') err(plugin, `hooks.json: "${event}" entry needs bash/powershell/command`);
           if (h.bash && !h.powershell) warn(plugin, `hooks.json: "${event}" has no powershell variant (Windows users)`);
           checkPluginRootRefs([h.bash, h.powershell, h.command].filter(Boolean), pluginRoot, plugin, `hook "${event}"`);
-          const script = / (scripts\/[\w.-]+) "\$\{PLUGIN_ROOT\}"$/.exec(h.command ?? '')?.[1];
+          const script = / (scripts\/[\w.-]+)$/.exec(h.command ?? '')?.[1];
           if (script && !existsSync(join(pluginRoot, script))) err(plugin, `hook "${event}" runs missing file ${script}`);
         }
       }

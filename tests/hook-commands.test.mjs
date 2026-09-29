@@ -1,6 +1,6 @@
 // Runs every generated hooks.json command the way each client does:
-//  1. "plugin runtime" (Copilot CLI, Copilot app): ${PLUGIN_ROOT} is replaced with the plugin folder.
-//  2. VS Code (Copilot and Local session targets): ${PLUGIN_ROOT} is NOT expanded and the command
+//  1. Copilot CLI / Copilot app: PLUGIN_ROOT is set in the environment.
+//  2. VS Code (Copilot and Local session targets): no plugin location is provided and the command
 //     runs from the workspace. The bootstrap must find the installed copy of the plugin.
 //  3. Plugin not found anywhere: the command must exit 0 silently so it never blocks the agent.
 // POSIX runs the commands with /bin/sh; Windows runs them with both PowerShell and cmd.exe.
@@ -11,7 +11,7 @@ import { readFileSync, mkdtempSync, rmSync, writeFileSync, mkdirSync, cpSync } f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HOOKS, hooksPath, BOOTSTRAP } from '../tools/build-hooks.mjs';
+import { HOOKS, hooksPath, BOOTSTRAP, FORBIDDEN } from '../tools/build-hooks.mjs';
 import { validateAutomation } from '../tools/validate.mjs';
 
 const PLUGINS = fileURLToPath(new URL('../plugins/', import.meta.url));
@@ -40,10 +40,13 @@ function makeHome(plugin, layout) {
   return home;
 }
 
-function run(shell, command, payload, { cwd, home }) {
-  const [cmd, args] = shell(command);
+/** Runs a hooks.json entry like a client does: shell + the entry's env on top of the client env. */
+function run(shell, entry, payload, { cwd, home, pluginRoot }) {
+  const [cmd, args] = shell(entry.command);
   const env = { ...process.env, HOME: home, USERPROFILE: home, APPDATA: join(home, '.config'), PLUGIN_DATA: join(home, 'data') };
-  for (const k of ['PLUGIN_ROOT', 'COPILOT_HOME']) delete env[k];
+  for (const k of ['PLUGIN_ROOT', 'COPILOT_HOME', 'NODE_OPTIONS']) delete env[k];
+  if (pluginRoot) env.PLUGIN_ROOT = pluginRoot;
+  Object.assign(env, entry.env);
   return spawnSync(cmd, args, { cwd, input: JSON.stringify(payload), encoding: 'utf8', env });
 }
 
@@ -60,7 +63,13 @@ function assertWorked(event, r) {
   if (event === 'preToolUse') assert.equal(JSON.parse(r.stdout).permissionDecision, 'deny', `cat .env is denied: ${r.stdout}${r.stderr}`);
 }
 
-test('bootstrap stays free of shell-sensitive characters', () => assert.doesNotMatch(BOOTSTRAP, /["$`%\\]/));
+test('bootstrap stays free of characters that break NODE_OPTIONS or data: URLs', () => assert.doesNotMatch(BOOTSTRAP, FORBIDDEN));
+
+test('hook commands are shell-neutral (no quotes, placeholders or shell syntax)', () => {
+  for (const plugin of Object.keys(HOOKS)) {
+    for (const entries of Object.values(HOOKS[plugin])) assert.match(entries[0].command, /^node -e 0 [a-z-]+ scripts\/[\w.-]+$/);
+  }
+});
 
 for (const plugin of Object.keys(HOOKS)) {
   test(`${plugin} hooks.json is generated from tools/build-hooks.mjs`, () => {
@@ -70,14 +79,14 @@ for (const plugin of Object.keys(HOOKS)) {
   const hooks = JSON.parse(readFileSync(hooksPath(plugin), 'utf8')).hooks;
   for (const [event, entries] of Object.entries(hooks)) {
     for (const [shellName, shell] of SHELLS) {
-      const command = entries[0].command;
+      const entry = entries[0];
       const label = `${plugin} ${event} (${shellName})`;
 
-      test(`${label}: CLI / Copilot app — \${PLUGIN_ROOT} expanded`, () => {
+      test(`${label}: CLI / Copilot app — PLUGIN_ROOT provided`, () => {
         const ws = makeWorkspace();
         const home = makeHome(plugin, null);
         try {
-          const r = run(shell, command.replaceAll('${PLUGIN_ROOT}', join(PLUGINS, plugin)), payloadFor(event, ws), { cwd: join(PLUGINS, plugin), home });
+          const r = run(shell, entry, payloadFor(event, ws), { cwd: join(PLUGINS, plugin), home, pluginRoot: join(PLUGINS, plugin) });
           assertWorked(event, r);
         } finally {
           rmSync(ws, { recursive: true, force: true });
@@ -90,7 +99,7 @@ for (const plugin of Object.keys(HOOKS)) {
           const ws = makeWorkspace();
           const home = makeHome(plugin, layout);
           try {
-            assertWorked(event, run(shell, command, payloadFor(event, ws), { cwd: ws, home }));
+            assertWorked(event, run(shell, entry, payloadFor(event, ws), { cwd: ws, home }));
           } finally {
             rmSync(ws, { recursive: true, force: true });
             rmSync(home, { recursive: true, force: true });
@@ -102,7 +111,7 @@ for (const plugin of Object.keys(HOOKS)) {
         const ws = makeWorkspace();
         const home = makeHome(plugin, null);
         try {
-          const r = run(shell, command, payloadFor(event, ws), { cwd: ws, home });
+          const r = run(shell, entry, payloadFor(event, ws), { cwd: ws, home });
           assert.equal(r.status, 0, r.stderr);
           assert.equal(r.stdout.trim(), '');
         } finally {
@@ -114,7 +123,7 @@ for (const plugin of Object.keys(HOOKS)) {
   }
 }
 
-test('an unexpanded ${PLUGIN_ROOT} folder inside the workspace is never trusted (cmd.exe passes the literal text)', () => {
+test('a relative PLUGIN_ROOT (e.g. an unexpanded placeholder) is never trusted', () => {
   const ws = makeWorkspace();
   const home = makeHome('secure-code-guardian', null);
   try {
@@ -122,20 +131,13 @@ test('an unexpanded ${PLUGIN_ROOT} folder inside the workspace is never trusted 
     mkdirSync(join(fake, 'scripts'), { recursive: true });
     writeFileSync(join(fake, 'plugin.json'), JSON.stringify({ name: 'secure-code-guardian' }));
     writeFileSync(join(fake, 'scripts', 'guard.mjs'), "process.stdout.write('PWNED')");
-    const cmd = JSON.parse(readFileSync(hooksPath('secure-code-guardian'), 'utf8')).hooks.preToolUse[0].command;
-    // Simulate cmd.exe: the placeholder reaches node as literal text.
-    const r = run(SHELLS[0][1], cmd.replace('"${PLUGIN_ROOT}"', "'${PLUGIN_ROOT}'"), payloadFor('preToolUse', ws), { cwd: ws, home });
+    const entry = HOOKS['secure-code-guardian'].preToolUse[0];
+    const r = run(SHELLS[0][1], entry, payloadFor('preToolUse', ws), { cwd: ws, home, pluginRoot: '${PLUGIN_ROOT}' });
     assert.equal(r.status, 0, r.stderr);
     assert.doesNotMatch(r.stdout, /PWNED/);
   } finally {
     rmSync(ws, { recursive: true, force: true });
     rmSync(home, { recursive: true, force: true });
-  }
-});
-
-test('the plugin root is the last argument, so a dropped empty argument cannot shift the others', () => {
-  for (const plugin of Object.keys(HOOKS)) {
-    for (const [, entries] of Object.entries(HOOKS[plugin])) assert.match(entries[0].command, / scripts\/[\w.-]+ "\$\{PLUGIN_ROOT\}"$/);
   }
 });
 

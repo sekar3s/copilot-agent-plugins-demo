@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 // Generates com.github.copilot/hooks/hooks.json for every plugin.
 //
-// Why a generator? Each hook command must work in every place a Copilot client runs hooks:
-//   - Copilot CLI / Copilot app: replaces ${PLUGIN_ROOT} with the plugin folder (bash or PowerShell).
-//   - VS Code (Copilot and Local session targets): runs plugin hooks itself and does NOT expand
-//     ${PLUGIN_ROOT} for Agent Plugins 1.0 packages; commands run from the workspace via
-//     /bin/sh, PowerShell or cmd.exe.
-// So every command is a shell-neutral `node -e "<bootstrap>" <plugin> <script> "${PLUGIN_ROOT}"`.
-// The bootstrap uses the expanded ${PLUGIN_ROOT} when it is available, otherwise it finds the
-// installed copy of the plugin (VS Code agentPlugins, VS Code marketplace clones, Copilot CLI
-// installs) and runs the script with stdin/stdout passed through.
+// Each hook must work everywhere a Copilot client runs hooks:
+//   - Copilot CLI / Copilot app: set PLUGIN_ROOT (and expand ${PLUGIN_ROOT}); run via bash or PowerShell.
+//   - VS Code (Copilot and Local session targets): runs plugin hooks itself and does NOT provide the
+//     plugin location for Agent Plugins 1.0 packages; commands run via /bin/sh, PowerShell or
+//     cmd.exe, from the workspace or from /.
+// So the command itself is a plain, shell-neutral `node -e 0 <plugin> <script>` (no quotes, no
+// placeholders). A small bootstrap is preloaded through the hook's NODE_OPTIONS (`--import` of a
+// data: URL). It uses PLUGIN_ROOT when the client provides it; otherwise it finds the installed copy of
+// the plugin (VS Code agentPlugins copies, VS Code marketplace clones, Copilot CLI installs) and runs
+// the script with stdin/stdout passed through. If the plugin can't be found it exits 0 silently.
 //
 // Usage: node tools/build-hooks.mjs          (write files)
 //        node tools/build-hooks.mjs --check  (exit 1 if any hooks.json is out of date)
@@ -19,38 +20,44 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// Readable source of the bootstrap. It is joined into one line, so it must not contain characters
-// that bash, PowerShell or cmd.exe would interpret inside double quotes: " $ ` % \
+// Readable bootstrap source (an ES module). It travels inside NODE_OPTIONS as
+// --import="data:text/javascript,<code>", so it must not contain: " \ # % ? $ ` or newlines.
 const BOOTSTRAP_LINES = [
-  "const f=require('fs'),p=require('path'),o=require('os');",
-  // The root goes last: Windows PowerShell 5.1 drops empty arguments, which would shift the others.
-  'const [n,s,r]=process.argv.slice(1);',
-  // A candidate is valid when its plugin.json has our name and the script exists.
-  "const ok=d=>{try{return JSON.parse(f.readFileSync(p.join(d,'plugin.json'),'utf8')).name===n&&f.existsSync(p.join(d,s))}catch(e){return false}};",
-  "const ls=d=>{try{return f.readdirSync(d).map(x=>p.join(d,x))}catch(e){return []}};",
-  // Only trust an absolute root; an unexpanded literal like ${PLUGIN_ROOT} would resolve inside the workspace.
-  'let root=r&&p.isAbsolute(r)&&ok(r)?r:null;',
-  'if(!root){',
-  "const h=o.homedir(),c=[];",
+  "import f from 'node:fs'; import p from 'node:path'; import o from 'node:os'; import cp from 'node:child_process';",
+  // With `node -e 0 <plugin> <script>`, argv is [node, plugin, script].
+  'const [n, s] = process.argv.slice(1);',
+  // A candidate is valid when it is absolute, its plugin.json has our name and the script exists.
+  "const ok = (d) => { try { return p.isAbsolute(d) && JSON.parse(f.readFileSync(p.join(d, 'plugin.json'), 'utf8')).name === n && f.existsSync(p.join(d, s)) } catch (e) { return false } };",
+  'const ls = (d) => { try { return f.readdirSync(d).map((x) => p.join(d, x)) } catch (e) { return [] } };',
+  "const mtime = (d) => f.statSync(p.join(d, 'plugin.json')).mtimeMs;",
+  'let root = null;',
+  'if (process.env.PLUGIN_ROOT && ok(process.env.PLUGIN_ROOT)) { root = process.env.PLUGIN_ROOT } else {',
+  '  const h = o.homedir(); const c = [];',
   // VS Code copies of enabled plugins: <user data>/agentPlugins/<id>/<version>
-  "for(const b of [p.join(h,'Library','Application Support'),p.join(h,'.config'),process.env.APPDATA||h])for(const v of ['Code','Code - Insiders'])for(const x of ls(p.join(b,v,'agentPlugins')))c.push(...ls(x));",
+  "  for (const b of [p.join(h, 'Library', 'Application Support'), p.join(h, '.config'), process.env.APPDATA || h]) for (const v of ['Code', 'Code - Insiders']) for (const x of ls(p.join(b, v, 'agentPlugins'))) c.push(...ls(x));",
   // VS Code marketplace clones: ~/.vscode/agent-plugins/<host>/<owner>/<repo>/plugins/<name>
-  "for(const v of ['.vscode','.vscode-insiders'])for(const a of ls(p.join(h,v,'agent-plugins')))for(const b of ls(a))for(const x of ls(b))c.push(p.join(x,'plugins',n),p.join(x,n));",
+  "  for (const v of ['.vscode', '.vscode-insiders']) for (const a of ls(p.join(h, v, 'agent-plugins'))) for (const b of ls(a)) for (const x of ls(b)) c.push(p.join(x, 'plugins', n), p.join(x, n));",
   // Copilot CLI installs: ~/.copilot/installed-plugins/<marketplace>/<name>
-  "for(const x of ls(p.join(process.env.COPILOT_HOME||p.join(h,'.copilot'),'installed-plugins')))c.push(p.join(x,n));",
-  "root=c.filter(d=>p.isAbsolute(d)&&ok(d)).sort((a,b)=>f.statSync(p.join(b,'plugin.json')).mtimeMs-f.statSync(p.join(a,'plugin.json')).mtimeMs)[0];",
+  "  for (const x of ls(p.join(process.env.COPILOT_HOME || p.join(h, '.copilot'), 'installed-plugins'))) c.push(p.join(x, n));",
+  '  root = c.filter(ok).sort((a, b) => mtime(b) - mtime(a))[0] || null;',
   '}',
-  // Missing plugin: exit 0 so a hook never blocks the agent by accident.
-  "if(root){const x=require('child_process').spawnSync(process.execPath,[p.join(root,s)],{stdio:'inherit',env:Object.assign({},process.env,{PLUGIN_ROOT:root})});process.exitCode=x.status||0}",
+  // The child must not inherit this NODE_OPTIONS, or it would run the bootstrap again.
+  'if (root) { const env = Object.assign({}, process.env, { PLUGIN_ROOT: root }); delete env.NODE_OPTIONS;',
+  "  const r = cp.spawnSync(process.execPath, [p.join(root, s)], { stdio: 'inherit', env: env }); process.exitCode = r.status || 0 }",
 ];
-export const BOOTSTRAP = BOOTSTRAP_LINES.join('');
+export const BOOTSTRAP = BOOTSTRAP_LINES.join(' ');
 
-const FORBIDDEN = /["$`%\\]/;
-if (FORBIDDEN.test(BOOTSTRAP)) throw new Error(`bootstrap contains a shell-sensitive character: ${FORBIDDEN.exec(BOOTSTRAP)[0]}`);
+export const FORBIDDEN = /["\\#%?$`\n]/;
+if (FORBIDDEN.test(BOOTSTRAP)) throw new Error(`bootstrap contains a forbidden character: ${JSON.stringify(FORBIDDEN.exec(BOOTSTRAP)[0])}`);
 
-export const hookCommand = (plugin, script) => `node -e "${BOOTSTRAP}" ${plugin} scripts/${script} "\${PLUGIN_ROOT}"`;
+export const hookCommand = (plugin, script) => `node -e 0 ${plugin} scripts/${script}`;
 
-const hook = (plugin, script, timeoutSec) => ({ type: 'command', command: hookCommand(plugin, script), timeoutSec });
+const hook = (plugin, script, timeoutSec) => ({
+  type: 'command',
+  command: hookCommand(plugin, script),
+  env: { NODE_OPTIONS: `--import="data:text/javascript,${BOOTSTRAP}"` },
+  timeoutSec,
+});
 
 export const HOOKS = {
   'ship-ready': {
