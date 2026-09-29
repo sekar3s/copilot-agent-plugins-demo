@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/scripts/repo-map-context.mjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}/scripts/repo-map-context.mjs\"",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

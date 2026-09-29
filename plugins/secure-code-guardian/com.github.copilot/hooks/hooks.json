@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/scripts/session-policy.mjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}/scripts/session-policy.mjs\"",
+        "timeoutSec": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/scripts/guard.mjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}/scripts/guard.mjs\"",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

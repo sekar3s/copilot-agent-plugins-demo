@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/scripts/session-context.mjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}/scripts/session-context.mjs\"",
+        "timeoutSec": 10
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/scripts/audit-tool.mjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}/scripts/audit-tool.mjs\"",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}

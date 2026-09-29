@@ -1,0 +1,37 @@
+{
+  "name": "copilot-agent-plugins-demo",
+  "owner": {
+    "name": "sekar3s",
+    "url": "https://github.com/sekar3s"
+  },
+  "metadata": {
+    "description": "Demo marketplace showcasing Agent Plugins 1.0 — skills, custom agents, hooks and MCP servers that work across VS Code, the GitHub Copilot app and Copilot CLI.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ship-ready",
+      "source": "./plugins/ship-ready",
+      "description": "Release-readiness toolkit: repo readiness score (MCP), release-notes skill, release-captain agent and tool-call audit hooks.",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": ["release", "changelog", "semver", "audit"]
+    },
+    {
+      "name": "secure-code-guardian",
+      "source": "./plugins/secure-code-guardian",
+      "description": "Security guardrails: blocks destructive commands and secret access (hooks), secret + OSV.dev dependency scanning (MCP), security-reviewer agent and threat-model skill.",
+      "version": "1.0.0",
+      "category": "security",
+      "keywords": ["security", "guardrails", "secrets", "vulnerabilities"]
+    },
+    {
+      "name": "docs-onboarding-buddy",
+      "source": "./plugins/docs-onboarding-buddy",
+      "description": "Onboarding in minutes: onboarding-guide agent, codebase-tour skill, repo-map session hook and the Microsoft Learn MCP server.",
+      "version": "1.0.0",
+      "category": "documentation",
+      "keywords": ["onboarding", "documentation", "microsoft-learn"]
+    }
+  ]
+}

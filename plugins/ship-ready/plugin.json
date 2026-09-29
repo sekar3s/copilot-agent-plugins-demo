@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "ship-ready",
+  "version": "1.0.0",
+  "description": "Release-readiness toolkit: scores your repo 0-100 via MCP, drafts audience-friendly release notes with a skill, recommends the next semantic version, and audits every agent tool call with hooks.",
+  "author": {
+    "name": "sekar3s",
+    "url": "https://github.com/sekar3s"
+  },
+  "homepage": "https://github.com/sekar3s/copilot-agent-plugins-demo/tree/main/plugins/ship-ready",
+  "repository": "https://github.com/sekar3s/copilot-agent-plugins-demo",
+  "license": "MIT",
+  "keywords": ["release", "changelog", "semver", "readiness", "audit", "hooks", "mcp"]
+}
